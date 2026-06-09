@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Eye, Heart } from "lucide-react";
+import { Eye, Heart, Loader2 } from "lucide-react";
 import Badge from "./Badge";
 import { useCart } from "@/context/CartContext";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 interface ProductCardProps {
   product: {
@@ -21,8 +23,29 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
+  const { data: session } = useSession();
+  const router = useRouter();
   const [isLiked, setIsLiked] = useState(false);
   const [added, setAdded] = useState(false);
+  const [liking, setLiking] = useState(false);
+
+  // Check if product is in wishlist on mount
+  useEffect(() => {
+    if (session) {
+      const checkWishlist = async () => {
+        try {
+          const res = await fetch("/api/user/wishlist");
+          const data = await res.json();
+          if (data.wishlist) {
+            setIsLiked(data.wishlist.some((p: { _id: string }) => p._id === product.id));
+          }
+        } catch (err) {
+          console.error("Failed to check wishlist:", err);
+        }
+      };
+      checkWishlist();
+    }
+  }, [session, product.id]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -32,10 +55,36 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     setTimeout(() => setAdded(false), 1500);
   };
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsLiked(!isLiked);
+
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+
+    setLiking(true);
+    try {
+      const method = isLiked ? "DELETE" : "POST";
+      const url = isLiked 
+        ? `/api/user/wishlist?productId=${product.id}` 
+        : "/api/user/wishlist";
+      
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: isLiked ? undefined : JSON.stringify({ productId: product.id }),
+      });
+
+      if (res.ok) {
+        setIsLiked(!isLiked);
+      }
+    } catch (err) {
+      console.error("Wishlist toggle failed:", err);
+    } finally {
+      setLiking(false);
+    }
   };
 
   return (
@@ -54,11 +103,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         
         <button 
           onClick={handleLike}
+          disabled={liking}
           className={`absolute top-2.5 right-2.5 w-7.5 h-7.5 bg-white rounded-full flex items-center justify-center shadow-md transition-all z-10 ${
-            isLiked ? "text-terracotta" : "text-text-light opacity-0 group-hover:opacity-100"
-          } hover:scale-110`}
+            isLiked ? "text-terracotta opacity-100" : "text-text-light opacity-0 group-hover:opacity-100"
+          } hover:scale-110 disabled:opacity-70`}
         >
-          <Heart size={14} fill={isLiked ? "currentColor" : "none"} />
+          {liking ? (
+            <Loader2 size={12} className="animate-spin text-terracotta" />
+          ) : (
+            <Heart size={14} fill={isLiked ? "currentColor" : "none"} />
+          )}
         </button>
 
         <div className="transition-transform group-hover:scale-110 duration-500">

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Hind_Siliguri, Tiro_Bangla } from "next/font/google";
 import "./globals.css";
-import { Providers } from "@/components/Providers";
+import Providers from "@/components/Providers";
 
 const hindSiliguri = Hind_Siliguri({
   variable: "--font-hind-siliguri",

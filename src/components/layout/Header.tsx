@@ -3,13 +3,16 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Heart, Package, ShoppingCart } from "lucide-react";
+import { Search, Heart, Package, ShoppingCart, User as UserIcon, LogOut, ChevronDown } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useSession, signOut } from "next-auth/react";
 
 const Header = () => {
   const router = useRouter();
+  const { data: session } = useSession();
   const { totalItems, setIsCartOpen, setIsTrackingOpen } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -61,12 +64,74 @@ const Header = () => {
           </div>
 
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <button className="bg-transparent border-1.5 border-clay text-clay px-4 py-1.5 rounded-md text-sm font-medium hover:bg-clay hover:text-white transition-all">
-              লগইন
-            </button>
-            <button className="bg-terracotta text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-earth transition-all">
-              রেজিস্ট্রেশন
-            </button>
+            {session ? (
+              <div className="relative">
+                <button 
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-2 bg-cream-dark/30 px-3 py-2 rounded-xl hover:bg-cream-dark/50 transition-all border border-cream-dark"
+                >
+                  <div className="w-8 h-8 bg-terracotta text-white rounded-full flex items-center justify-center text-xs font-bold">
+                    {session.user?.name?.charAt(0)}
+                  </div>
+                  <div className="flex flex-col items-start mr-1">
+                    <span className="text-[10px] text-text-light uppercase tracking-tighter leading-none mb-1">স্বাগতম,</span>
+                    <span className="text-[13px] font-bold text-text-dark leading-none">{session.user?.name?.split(" ")[0]}</span>
+                  </div>
+                  <ChevronDown size={14} className={`text-text-mid transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-cream-dark py-2 z-[1001] animate-in fade-in slide-in-from-top-2">
+                    <Link 
+                      href="/profile" 
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-mid hover:bg-cream hover:text-terracotta transition-all"
+                    >
+                      <UserIcon size={16} /> প্রোফাইল
+                    </Link>
+                    <Link 
+                      href="/profile/orders" 
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-mid hover:bg-cream hover:text-terracotta transition-all"
+                    >
+                      <Package size={16} /> আমার অর্ডার
+                    </Link>
+                    <Link 
+                      href="/profile/wishlist" 
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-mid hover:bg-cream hover:text-terracotta transition-all"
+                    >
+                      <Heart size={16} /> উইশলিস্ট
+                    </Link>
+                    <hr className="my-2 border-cream-dark" />
+                    <button 
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        signOut();
+                      }}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-all w-full"
+                    >
+                      <LogOut size={16} /> লগআউট
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <Link 
+                  href="/login"
+                  className="bg-transparent border-1.5 border-clay text-clay px-4 py-1.5 rounded-md text-sm font-medium hover:bg-clay hover:text-white transition-all"
+                >
+                  লগইন
+                </Link>
+                <Link 
+                  href="/register"
+                  className="bg-terracotta text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-earth transition-all"
+                >
+                  রেজিস্ট্রেশন
+                </Link>
+              </div>
+            )}
             
             <div className="flex items-center gap-1 ml-2">
               <button className="flex flex-col items-center gap-0.5 p-1.5 text-text-mid hover:bg-cream-dark hover:text-terracotta rounded-lg transition-all">

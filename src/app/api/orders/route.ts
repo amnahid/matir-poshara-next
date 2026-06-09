@@ -6,7 +6,7 @@ import Order from "@/models/Order";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { customer, items, totalPrice } = body;
+    const { customer, items, totalPrice, userId } = body;
 
     if (!customer || !items || items.length === 0) {
       return NextResponse.json({ error: "Invalid order data" }, { status: 400 });
@@ -21,6 +21,7 @@ export async function POST(request: Request) {
 
     const newOrder = await Order.create({
       orderNumber,
+      userId: userId || undefined,
       customer,
       items,
       totalPrice,

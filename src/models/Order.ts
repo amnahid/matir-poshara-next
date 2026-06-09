@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IOrder extends Document {
   orderNumber: string;
+  userId?: string;
   customer: {
     name: string;
     phone: string;
@@ -23,6 +24,7 @@ export interface IOrder extends Document {
 const OrderSchema: Schema = new Schema(
   {
     orderNumber: { type: String, required: true, unique: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
     customer: {
       name: { type: String, required: true },
       phone: { type: String, required: true },

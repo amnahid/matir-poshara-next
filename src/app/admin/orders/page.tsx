@@ -8,6 +8,7 @@ import {
   Calendar,
   Phone
 } from "lucide-react";
+import OrderDetailsModal from "@/components/admin/OrderDetailsModal";
 
 interface OrderItem {
   productId: string;
@@ -35,12 +36,11 @@ const AdminOrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const fetchOrders = async () => {
     try {
-      // In a real app, this would be an admin-only API
-      // For demo, we'll use a direct fetch (ideally protected by layout auth)
-      // const res = await fetch("/api/orders/all"); 
       const response = await fetch("/api/admin/orders");
       const data = await response.json();
       setOrders(data.orders || []);
@@ -66,6 +66,9 @@ const AdminOrdersPage = () => {
       
       if (res.ok) {
         setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: newStatus } : o));
+        if (selectedOrder?._id === orderId) {
+          setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+        }
       } else {
         alert("স্ট্যাটাস আপডেট করতে সমস্যা হয়েছে।");
       }
@@ -74,6 +77,11 @@ const AdminOrdersPage = () => {
     } finally {
       setUpdating(null);
     }
+  };
+
+  const openDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setIsDetailsOpen(true);
   };
 
   const statusMap: Record<string, { label: string, class: string }> = {
@@ -129,8 +137,8 @@ const AdminOrdersPage = () => {
                 orders.map((order) => (
                   <tr key={order._id} className="hover:bg-cream/50 transition-colors group">
                     <td className="px-8 py-6">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm font-bold text-text-dark">{order.orderNumber}</span>
+                      <div className="flex flex-col gap-1" onClick={() => openDetails(order)}>
+                        <span className="text-sm font-bold text-text-dark cursor-pointer hover:text-terracotta transition-colors">{order.orderNumber}</span>
                         <div className="flex items-center gap-1.5 text-[10px] text-text-light">
                           <Calendar size={12} /> {new Date(order.createdAt).toLocaleDateString("bn-BD")}
                         </div>
@@ -178,7 +186,10 @@ const AdminOrdersPage = () => {
                       </div>
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <button className="p-2 text-text-light hover:text-terracotta hover:bg-cream rounded-lg transition-all">
+                      <button 
+                        onClick={() => openDetails(order)}
+                        className="p-2 text-text-light hover:text-terracotta hover:bg-cream rounded-lg transition-all"
+                      >
                         <ExternalLink size={18} />
                       </button>
                     </td>
@@ -195,6 +206,14 @@ const AdminOrdersPage = () => {
           </table>
         </div>
       </div>
+
+      <OrderDetailsModal 
+        isOpen={isDetailsOpen}
+        order={selectedOrder}
+        onClose={() => setIsDetailsOpen(false)}
+        onStatusUpdate={handleStatusUpdate}
+        updating={updating}
+      />
     </div>
   );
 };

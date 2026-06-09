@@ -8,6 +8,7 @@ import {
   Trash2, 
   Loader2
 } from "lucide-react";
+import ProductAddModal from "@/components/admin/ProductAddModal";
 
 interface Product {
   _id: string;
@@ -29,6 +30,7 @@ const AdminProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -70,7 +72,10 @@ const AdminProductsPage = () => {
               className="bg-transparent border-none outline-none px-3 text-sm text-text-dark w-full md:w-48"
             />
           </div>
-          <button className="bg-terracotta text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-clay transition-all shadow-lg shadow-terracotta/20 flex items-center gap-2">
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-terracotta text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-clay transition-all shadow-lg shadow-terracotta/20 flex items-center gap-2"
+          >
             <Plus size={18} /> নতুন পণ্য
           </button>
         </div>
@@ -157,6 +162,12 @@ const AdminProductsPage = () => {
           </table>
         </div>
       </div>
+
+      <ProductAddModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={fetchProducts} 
+      />
     </div>
   );
 };

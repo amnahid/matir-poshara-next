@@ -8,9 +8,11 @@ import Footer from "@/components/layout/Footer";
 import { useCart } from "@/context/CartContext";
 import { ChevronLeft, CheckCircle2, Loader2, MapPin, Phone, User } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 const CheckoutPage = () => {
   const router = useRouter();
+  const { data: session } = useSession();
   const { cartItems, totalPrice, clearCart, setIsTrackingOpen } = useCart();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -21,25 +23,86 @@ const CheckoutPage = () => {
     phone: "",
     address: "",
   });
+  const [formErrors, setFormErrors] = useState({
+    name: "",
+    phone: "",
+    address: "",
+  });
+
+  // Load user data if logged in
+  useEffect(() => {
+    if (session?.user) {
+      const fetchUserData = async () => {
+        try {
+          const res = await fetch("/api/user/profile");
+          const data = await res.json();
+          if (data.user) {
+            setFormData({
+              name: data.user.name || session.user?.name || "",
+              phone: data.user.phone || "",
+              address: data.user.address || "",
+            });
+          }
+        } catch (err) {
+          console.error("Failed to fetch user data:", err);
+          setFormData(prev => ({
+            ...prev,
+            name: session.user?.name || ""
+          }));
+        }
+      };
+      fetchUserData();
+    }
+  }, [session]);
 
   // Redirect if cart is empty and not on success screen
   useEffect(() => {
-    if (cartItems.length === 0 && !success) {
+    if (cartItems.length === 0 && !success && !loading) {
       const timer = setTimeout(() => {
         if (cartItems.length === 0 && !success) router.push("/");
-      }, 500);
+      }, 800);
       return () => clearTimeout(timer);
     }
-  }, [cartItems, success, router]);
+  }, [cartItems, success, router, loading]);
+
+  const validateForm = () => {
+    let isValid = true;
+    const errors = { name: "", phone: "", address: "" };
+
+    if (formData.name.trim().length < 2) {
+      errors.name = "দয়া করে আপনার সঠিক নাম লিখুন।";
+      isValid = false;
+    }
+
+    const phoneRegex = /^(?:\+88|01)?\d{11}$/;
+    if (!phoneRegex.test(formData.phone.replace(/[-\s]/g, ""))) {
+      errors.phone = "দয়া করে সঠিক ১১ ডিজিটের ফোন নম্বর লিখুন।";
+      isValid = false;
+    }
+
+    if (formData.address.trim().length < 10) {
+      errors.address = "দয়া করে আপনার বিস্তারিত ঠিকানা লিখুন।";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (formErrors[name as keyof typeof formErrors]) {
+      setFormErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+
+    if (!validateForm()) return;
 
     setLoading(true);
     try {
@@ -47,6 +110,7 @@ const CheckoutPage = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: session?.user?.id,
           customer: formData,
           items: cartItems.map(item => ({
             productId: item.id,
@@ -144,8 +208,9 @@ const CheckoutPage = () => {
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="যেমন: রহিম মৃধা"
-                      className="w-full bg-cream border border-cream-dark rounded-xl px-4 py-3 outline-none focus:border-terracotta transition-colors text-sm"
+                      className={`w-full bg-cream border rounded-xl px-4 py-3 outline-none transition-colors text-sm ${formErrors.name ? "border-red-500 focus:border-red-500" : "border-cream-dark focus:border-terracotta"}`}
                     />
+                    {formErrors.name && <p className="text-[10px] text-red-500 font-medium">{formErrors.name}</p>}
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-text-mid flex items-center gap-2">
@@ -157,8 +222,9 @@ const CheckoutPage = () => {
                       value={formData.phone}
                       onChange={handleChange}
                       placeholder="যেমন: 01700-000000"
-                      className="w-full bg-cream border border-cream-dark rounded-xl px-4 py-3 outline-none focus:border-terracotta transition-colors text-sm"
+                      className={`w-full bg-cream border rounded-xl px-4 py-3 outline-none transition-colors text-sm ${formErrors.phone ? "border-red-500 focus:border-red-500" : "border-cream-dark focus:border-terracotta"}`}
                     />
+                    {formErrors.phone && <p className="text-[10px] text-red-500 font-medium">{formErrors.phone}</p>}
                   </div>
                 </div>
                 
@@ -173,8 +239,9 @@ const CheckoutPage = () => {
                     onChange={handleChange}
                     rows={3}
                     placeholder="আপনার বাসার নম্বর, রোড, এলাকা ও জেলা উল্লেখ করুন"
-                    className="w-full bg-cream border border-cream-dark rounded-xl px-4 py-3 outline-none focus:border-terracotta transition-colors text-sm resize-none"
+                    className={`w-full bg-cream border rounded-xl px-4 py-3 outline-none transition-colors text-sm resize-none ${formErrors.address ? "border-red-500 focus:border-red-500" : "border-cream-dark focus:border-terracotta"}`}
                   ></textarea>
+                  {formErrors.address && <p className="text-[10px] text-red-500 font-medium">{formErrors.address}</p>}
                 </div>
 
                 <div className="pt-4">

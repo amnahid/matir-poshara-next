@@ -23,18 +23,24 @@ const statusLabels: Record<string, string> = {
 const TrackingModal = () => {
   const { isTrackingOpen, setIsTrackingOpen } = useCart();
   const [orderNumber, setOrderNumber] = useState("");
+  const [error, setError] = useState("");
   const [result, setResult] = useState<IOrder | "not-found" | null>(null);
   const [loading, setLoading] = useState(false);
 
   if (!isTrackingOpen) return null;
 
   const handleSearch = async () => {
-    if (!orderNumber.trim()) return;
+    const trimmedOrder = orderNumber.trim();
+    if (!trimmedOrder) {
+      setError("দয়া করে একটি অর্ডার নম্বর দিন।");
+      return;
+    }
     
     setLoading(true);
     setResult(null);
+    setError("");
     try {
-      const res = await fetch(`/api/orders?orderNumber=${orderNumber.trim()}`);
+      const res = await fetch(`/api/orders?orderNumber=${trimmedOrder}`);
       const data = await res.json();
       if (data.order) {
         setResult(data.order);
@@ -43,7 +49,7 @@ const TrackingModal = () => {
       }
     } catch (error) {
       console.error("Tracking Fetch Error:", error);
-      setResult("not-found");
+      setError("সার্ভারে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।");
     } finally {
       setLoading(false);
     }
@@ -93,21 +99,28 @@ const TrackingModal = () => {
             </button>
           </div>
 
-          <div className="p-5 md:px-7 bg-cream border-b border-cream-dark flex gap-3">
-            <input 
-              className="flex-1 px-4.5 py-3 border-1.5 border-cream-dark rounded-xl font-hind text-[15px] text-text-dark bg-white outline-none focus:border-terracotta transition-colors"
-              type="text" 
-              placeholder="অর্ডার নম্বর লিখুন... (যেমন: MP-2025-001)"
-              value={orderNumber}
-              onChange={(e) => setOrderNumber(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-            <button 
-              onClick={handleSearch}
-              className="bg-terracotta text-white rounded-xl px-5.5 py-3 font-hind text-[15px] font-bold hover:bg-clay transition-all whitespace-nowrap"
-            >
-              🔍 খুঁজুন
-            </button>
+          <div className="p-5 md:px-7 bg-cream border-b border-cream-dark flex flex-col gap-2">
+            <div className="flex gap-3">
+              <input 
+                className={`flex-1 px-4.5 py-3 border-1.5 rounded-xl font-hind text-[15px] text-text-dark bg-white outline-none transition-colors ${error ? "border-red-500" : "border-cream-dark focus:border-terracotta"}`}
+                type="text" 
+                placeholder="অর্ডার নম্বর লিখুন... (যেমন: MP-2025-001)"
+                value={orderNumber}
+                onChange={(e) => {
+                  setOrderNumber(e.target.value);
+                  if (error) setError("");
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              />
+              <button 
+                onClick={handleSearch}
+                disabled={loading}
+                className="bg-terracotta text-white rounded-xl px-5.5 py-3 font-hind text-[15px] font-bold hover:bg-clay transition-all whitespace-nowrap disabled:opacity-70"
+              >
+                {loading ? <Loader2 className="animate-spin" size={20} /> : "🔍 খুঁজুন"}
+              </button>
+            </div>
+            {error && <p className="text-[11px] text-red-500 font-medium px-1">{error}</p>}
           </div>
 
           <div className="p-8 md:px-7 min-h-[220px] flex items-center justify-center bg-white">
