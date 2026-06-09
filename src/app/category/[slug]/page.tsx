@@ -19,6 +19,7 @@ const slugToName: Record<string, string> = {
   lighting: "আলোকসজ্জা",
   gifts: "উপহারের সামগ্রী",
   heritage: "ঐতিহ্যবাহী সংগ্রহ",
+  all: "সকল পণ্য",
 };
 
 async function getCategoryProducts(slug: string, searchParams: { min?: string, max?: string, rating?: string }) {
@@ -28,7 +29,10 @@ async function getCategoryProducts(slug: string, searchParams: { min?: string, m
     
     await dbConnect();
     
-    const query: QueryFilter<IProduct> = { category: categoryName };
+    const query: QueryFilter<IProduct> = {};
+    if (slug !== "all") {
+      query.category = categoryName;
+    }
     
     // Price filter
     if (searchParams.min || searchParams.max) {
@@ -42,7 +46,7 @@ async function getCategoryProducts(slug: string, searchParams: { min?: string, m
       query.rating = { $gte: parseInt(searchParams.rating) };
     }
 
-    const products = await Product.find(query).lean() as IProduct[];
+    const products = await Product.find(query).sort({ createdAt: -1 }).lean() as IProduct[];
     return products.map((p) => ({ ...p, id: p._id.toString() }));
   } catch (e) {
     console.error("Failed to fetch category products", e);
@@ -58,7 +62,7 @@ export default async function CategoryPage({
   searchParams: { min?: string, max?: string, rating?: string } 
 }) {
   const { slug } = params;
-  const categoryName = slugToName[slug] || "সকল পণ্য";
+  const categoryName = slugToName[slug] || "পণ্য সংগ্রহ";
   const products = await getCategoryProducts(slug, searchParams);
 
   return (
@@ -84,7 +88,7 @@ export default async function CategoryPage({
             </div>
 
             {products.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                 {products.map((prod) => (
                   <ProductCard key={prod.id} product={prod} />
                 ))}
@@ -93,7 +97,7 @@ export default async function CategoryPage({
               <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-cream-dark">
                 <div className="text-6xl mb-4">🏺</div>
                 <h3 className="font-tiro text-xl text-text-dark mb-2">দুঃখিত, কোনো পণ্য পাওয়া যায়নি</h3>
-                <p className="text-text-light mb-6">এই ক্যাটাগরিতে বর্তমানে কোনো পণ্য নেই। দয়া করে পরে আবার চেষ্টা করুন।</p>
+                <p className="text-text-light mb-6">বর্তমানে কোনো পণ্য নেই। দয়া করে পরে আবার চেষ্টা করুন।</p>
                 <Link href="/" className="bg-terracotta text-white px-8 py-2.5 rounded-full font-bold hover:bg-clay transition-all">
                   কেনাকাটায় ফিরে যান
                 </Link>

@@ -1,11 +1,7 @@
-import dbConnect from "./mongodb";
-import Product from "../models/Product";
-import Artisan from "../models/Artisan";
-import Category from "../models/Category";
-import Review from "../models/Review";
-import User from "../models/User";
-import Order from "../models/Order";
-import bcrypt from "bcryptjs";
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+const MONGODB_URI = "mongodb+srv://Vercel-Admin-sa-shop:4w1r1sZ3PkJhIZBw@sa-shop.iddjrgq.mongodb.net/matir-poshra?retryWrites=true&w=majority";
 
 const categories = [
   { name: "রান্নাঘরের পণ্য", productCount: 48, icon: "🍲" },
@@ -16,7 +12,7 @@ const categories = [
   { name: "ঐতিহ্যবাহী সংগ্রহ", productCount: 51, icon: "🏺" },
 ];
 
-const products = [
+const productsData = [
   {
     "name": "হস্তশিল্প মাটির হাঁড়ি",
     "price": 350,
@@ -169,51 +165,57 @@ const products = [
   }
 ];
 
-const artisans = [
-  {
-    name: "রহিম মৃধা",
-    village: "ধামরাই, ঢাকা",
-    experience: "২৫ বছরের অভিজ্ঞতা",
-    story: "ধামরাইয়ের মাটি দিয়ে তৈরি প্রতিটি পাত্রে তিনি ঢেলে দেন নিজের জীবনের অভিজ্ঞতা। ছোটবেলা থেকে বাবার হাত ধরে শেখা এই শিল্পকে তিনি বাঁচিয়ে রেখেছেন প্রজন্মের পর প্রজন্ম ধরে।",
-  },
-  {
-    name: "রাবেয়া বেগম",
-    village: "রাজশাহী",
-    experience: "১৮ বছরের অভিজ্ঞতা",
-    story: "রাজশাহীর ঐতিহ্যবাহী নকশায় টেরাকোটার পণ্য তৈরি করেন তিনি, যা আন্তর্জাতিক মানের। তাঁর হাতের ছোঁয়ায় মাটি যেন জীবন্ত হয়ে ওঠে নতুন রূপে।",
-  },
-  {
-    name: "সুধীর পাল",
-    village: "কুমিল্লা",
-    experience: "৩০ বছরের অভিজ্ঞতা",
-    story: "কুমিল্লার ঐতিহ্যবাহী পাল বংশের উত্তরসূরি সুধীর পাল। তার হাতের নিপুণ কারুকাজে মাটির হাঁড়ি-পাতিল প্রাণ ফিরে পায়।",
-  }
-];
+const ProductSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String, default: "" },
+  price: { type: Number, required: true },
+  originalPrice: { type: Number },
+  rating: { type: Number, default: 5 },
+  reviewsCount: { type: Number, default: 0 },
+  category: { type: String, required: true },
+  badge: { type: String },
+  icon: { type: String },
+  isBestSelling: { type: Boolean, default: false },
+  images: { type: [String], default: [] },
+}, { timestamps: true });
 
-export async function seedDatabase() {
+const CategorySchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  productCount: { type: Number, default: 0 },
+  icon: { type: String },
+});
+
+const UserSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String },
+  phone: { type: String },
+  address: { type: String },
+}, { timestamps: true });
+
+const Product = mongoose.model('Product', ProductSchema);
+const Category = mongoose.model('Category', CategorySchema);
+const User = mongoose.model('User', UserSchema);
+
+async function seed() {
   try {
-    await dbConnect();
+    await mongoose.connect(MONGODB_URI);
+    console.log("Connected to MongoDB");
 
     console.log("Cleaning database...");
-    await Category.deleteMany({});
     await Product.deleteMany({});
-    await Artisan.deleteMany({});
-    await Review.deleteMany({});
+    await Category.deleteMany({});
     await User.deleteMany({});
-    await Order.deleteMany({});
 
     console.log("Seeding categories...");
     await Category.insertMany(categories);
 
     console.log("Seeding products...");
-    const seededProducts = await Product.insertMany(products);
+    await Product.insertMany(productsData);
 
-    console.log("Seeding artisans...");
-    await Artisan.insertMany(artisans);
-
-    console.log("Creating default customer...");
+    console.log("Seeding test user...");
     const hashedPassword = await bcrypt.hash("customer123", 12);
-    const user = await User.create({
+    await User.create({
       name: "টেস্ট ইউজার",
       email: "user@example.com",
       password: hashedPassword,
@@ -221,41 +223,12 @@ export async function seedDatabase() {
       address: "বাড়ি-১২, রোড-৫, ধানমন্ডি, ঢাকা",
     });
 
-    console.log("Creating sample orders...");
-    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    const randomPart = Math.floor(1000 + Math.random() * 9000);
-    const orderNumber = "MP-" + datePart + "-" + randomPart.toString();
-
-    await Order.create({
-      orderNumber,
-      userId: user._id,
-      customer: {
-        name: user.name,
-        phone: user.phone,
-        address: user.address,
-      },
-      items: [
-        {
-          productId: seededProducts[0]._id,
-          name: seededProducts[0].name,
-          price: seededProducts[0].price,
-          qty: 2,
-          icon: seededProducts[0].icon
-        },
-        {
-          productId: seededProducts[1]._id,
-          name: seededProducts[1].name,
-          price: seededProducts[1].price,
-          qty: 1,
-          icon: seededProducts[1].icon
-        }
-      ],
-      totalPrice: (seededProducts[0].price * 2) + seededProducts[1].price,
-      status: "delivered",
-    });
-
     console.log("Database seeded successfully!");
+    process.exit(0);
   } catch (error) {
     console.error("Error seeding database:", error);
+    process.exit(1);
   }
 }
+
+seed();

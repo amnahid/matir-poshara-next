@@ -14,6 +14,7 @@ export interface IOrder extends Document {
     price: number;
     qty: number;
     icon?: string;
+    image?: string;
   }[];
   totalPrice: number;
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
@@ -37,6 +38,7 @@ const OrderSchema: Schema = new Schema(
         price: { type: Number, required: true },
         qty: { type: Number, required: true },
         icon: { type: String },
+        image: { type: String },
       },
     ],
     totalPrice: { type: Number, required: true },

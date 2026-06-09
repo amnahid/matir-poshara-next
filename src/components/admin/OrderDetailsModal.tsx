@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { X, Package, User, Phone, MapPin, Calendar, Clock, ShoppingBag } from "lucide-react";
 
 interface OrderItem {
@@ -9,6 +10,7 @@ interface OrderItem {
   price: number;
   qty: number;
   icon?: string;
+  image?: string;
 }
 
 interface Order {
@@ -157,8 +159,18 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, isOpen, on
                     <tr key={i}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-xl shadow-inner">
-                            {item.icon || "🏺"}
+                          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-xl shadow-inner relative overflow-hidden">
+                            {item.image ? (
+                              <Image 
+                                src={item.image} 
+                                alt={item.name} 
+                                fill 
+                                unoptimized
+                                className="object-cover"
+                              />
+                            ) : (
+                              item.icon || "🏺"
+                            )}
                           </div>
                           <span className="text-sm font-semibold text-text-dark">{item.name}</span>
                         </div>

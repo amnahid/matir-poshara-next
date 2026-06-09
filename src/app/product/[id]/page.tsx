@@ -1,4 +1,4 @@
-import React from "react";
+import Image from "next/image";
 import Header from "@/components/layout/Header";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -60,6 +60,7 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
   }
 
   const relatedProducts = await getRelatedProducts(product.category, id);
+  const images = product.images && product.images.length > 0 ? product.images : [];
 
   return (
     <main className="min-h-screen bg-cream">
@@ -80,8 +81,18 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
           <div className="flex flex-col lg:row-span-2 lg:flex-row">
             {/* LEFT: IMAGE GALLERY */}
             <div className="lg:w-1/2 p-6 md:p-10 bg-cream-dark/20 flex flex-col gap-4">
-              <div className="aspect-square bg-cream-dark rounded-2xl flex items-center justify-center text-[120px] shadow-inner relative overflow-hidden">
-                {product.icon}
+              <div className="aspect-square bg-cream-dark rounded-2xl flex items-center justify-center shadow-inner relative overflow-hidden">
+                {images.length > 0 ? (
+                  <Image 
+                    src={images[0]} 
+                    alt={product.name} 
+                    fill 
+                    unoptimized
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="text-[120px]">{product.icon}</div>
+                )}
                 {product.badge && (
                   <div className="absolute top-6 left-6">
                     <Badge variant={product.badge} className="px-3 py-1.5 text-xs">
@@ -91,11 +102,25 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
                 )}
               </div>
               <div className="grid grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="aspect-square bg-cream-dark/40 rounded-lg flex items-center justify-center text-3xl cursor-pointer hover:border-terracotta border-1.5 border-transparent transition-all">
-                    {product.icon}
-                  </div>
-                ))}
+                {images.length > 0 ? (
+                  images.map((img, i) => (
+                    <div key={i} className="aspect-square bg-cream-dark/40 rounded-lg relative overflow-hidden cursor-pointer hover:border-terracotta border-1.5 border-transparent transition-all">
+                      <Image 
+                        src={img} 
+                        alt={`${product.name} ${i + 1}`} 
+                        fill 
+                        unoptimized
+                        className="object-cover"
+                      />
+                    </div>
+                  ))
+                ) : (
+                  [1, 2, 3, 4].map((i) => (
+                    <div key={i} className="aspect-square bg-cream-dark/40 rounded-lg flex items-center justify-center text-3xl cursor-pointer hover:border-terracotta border-1.5 border-transparent transition-all">
+                      {product.icon}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -103,7 +128,13 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
             <div className="lg:w-1/2 p-6 md:p-10 lg:border-l border-cream-dark">
               <div className="mb-6">
                 <h1 className="font-tiro text-3xl md:text-4xl text-text-dark mb-3">{product.name}</h1>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-4">
+                  {product.artisan && (
+                    <div className="flex items-center gap-1.5 bg-cream px-3 py-1 rounded-full border border-cream-dark">
+                      <span className="text-[10px] text-text-light font-bold uppercase">কারিগর:</span>
+                      <span className="text-xs font-bold text-terracotta">{product.artisan}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5">
                     <div className="flex text-[#F5A623]">
                       {Array.from({ length: 5 }).map((_, i) => (
@@ -112,10 +143,8 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
                     </div>
                     <span className="text-sm font-semibold text-text-dark">{product.rating}.0</span>
                   </div>
-                  <span className="text-text-light text-sm">|</span>
+                  <span className="text-text-light text-sm hidden sm:inline">|</span>
                   <span className="text-text-light text-sm">{product.reviewsCount}টি রিভিউ</span>
-                  <span className="text-text-light text-sm">|</span>
-                  <span className="text-leaf text-sm font-bold">স্টকে আছে</span>
                 </div>
               </div>
 

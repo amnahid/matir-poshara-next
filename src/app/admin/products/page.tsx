@@ -1,14 +1,17 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { 
   Search, 
   Plus, 
   Edit2, 
   Trash2, 
-  Loader2
+  Loader2,
+  Eye
 } from "lucide-react";
-import ProductAddModal from "@/components/admin/ProductAddModal";
+import ProductFormModal from "@/components/admin/ProductFormModal";
+import Link from "next/link";
 
 interface Product {
   _id: string;
@@ -30,7 +33,8 @@ const AdminProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const fetchProducts = async () => {
     try {
@@ -47,6 +51,34 @@ const AdminProductsPage = () => {
   useEffect(() => {
     setTimeout(() => fetchProducts(), 0);
   }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("আপনি কি নিশ্চিতভাবে এই পণ্যটি মুছে ফেলতে চান?")) return;
+    
+    try {
+      const res = await fetch(`/api/admin/products?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setProducts(products.filter(p => p._id !== id));
+      } else {
+        alert("পণ্যটি মুছতে সমস্যা হয়েছে।");
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("সার্ভারে সমস্যা হয়েছে।");
+    }
+  };
+
+  const openEditModal = (product: Product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const openAddModal = () => {
+    setSelectedProduct(null);
+    setIsModalOpen(true);
+  };
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -73,7 +105,7 @@ const AdminProductsPage = () => {
             />
           </div>
           <button 
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={openAddModal}
             className="bg-terracotta text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-clay transition-all shadow-lg shadow-terracotta/20 flex items-center gap-2"
           >
             <Plus size={18} /> নতুন পণ্য
@@ -108,8 +140,18 @@ const AdminProductsPage = () => {
                   <tr key={product._id} className="hover:bg-cream/50 transition-colors group">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-cream rounded-xl flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
-                          {product.icon || "🏺"}
+                        <div className="w-12 h-12 bg-cream rounded-xl flex items-center justify-center text-2xl shadow-inner flex-shrink-0 relative overflow-hidden">
+                          {product.images && product.images.length > 0 ? (
+                            <Image 
+                              src={product.images[0]} 
+                              alt={product.name} 
+                              fill 
+                              unoptimized
+                              className="object-cover"
+                            />
+                          ) : (
+                            product.icon || "🏺"
+                          )}
                         </div>
                         <div className="flex flex-col gap-0.5">
                           <span className="text-sm font-bold text-text-dark">{product.name}</span>
@@ -141,10 +183,23 @@ const AdminProductsPage = () => {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-2 text-text-light hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all">
+                        <Link 
+                          href={`/product/${product._id}`}
+                          target="_blank"
+                          className="p-2 text-text-light hover:text-clay hover:bg-cream rounded-lg transition-all"
+                        >
+                          <Eye size={16} />
+                        </Link>
+                        <button 
+                          onClick={() => openEditModal(product)}
+                          className="p-2 text-text-light hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                        >
                           <Edit2 size={16} />
                         </button>
-                        <button className="p-2 text-text-light hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                        <button 
+                          onClick={() => handleDelete(product._id)}
+                          className="p-2 text-text-light hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -163,10 +218,11 @@ const AdminProductsPage = () => {
         </div>
       </div>
 
-      <ProductAddModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
+      <ProductFormModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
         onSuccess={fetchProducts} 
+        product={selectedProduct}
       />
     </div>
   );

@@ -6,7 +6,8 @@ import {
   ExternalLink, 
   Loader2,
   Calendar,
-  Phone
+  Phone,
+  Trash2
 } from "lucide-react";
 import OrderDetailsModal from "@/components/admin/OrderDetailsModal";
 
@@ -16,6 +17,7 @@ interface OrderItem {
   price: number;
   qty: number;
   icon?: string;
+  image?: string;
 }
 
 interface Order {
@@ -38,6 +40,7 @@ const AdminOrdersPage = () => {
   const [updating, setUpdating] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchOrders = async () => {
     try {
@@ -58,10 +61,10 @@ const AdminOrdersPage = () => {
   const handleStatusUpdate = async (orderId: string, newStatus: Order["status"]) => {
     setUpdating(orderId);
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      const res = await fetch(`/api/admin/orders`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ id: orderId, status: newStatus }),
       });
       
       if (res.ok) {
@@ -79,6 +82,24 @@ const AdminOrdersPage = () => {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("আপনি কি নিশ্চিতভাবে এই অর্ডারটি মুছে ফেলতে চান?")) return;
+    
+    try {
+      const res = await fetch(`/api/admin/orders?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setOrders(orders.filter(o => o._id !== id));
+      } else {
+        alert("অর্ডারটি মুছতে সমস্যা হয়েছে।");
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("সার্ভারে সমস্যা হয়েছে।");
+    }
+  };
+
   const openDetails = (order: Order) => {
     setSelectedOrder(order);
     setIsDetailsOpen(true);
@@ -92,6 +113,12 @@ const AdminOrdersPage = () => {
     cancelled: { label: "বাতিল", class: "bg-red-100 text-red-700 border-red-200" },
   };
 
+  const filteredOrders = orders.filter(o => 
+    o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.customer.phone.includes(searchTerm)
+  );
+
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
@@ -104,7 +131,9 @@ const AdminOrdersPage = () => {
           <Search size={18} className="text-text-light" />
           <input 
             type="text" 
-            placeholder="অর্ডার নম্বর খুঁজুন..." 
+            placeholder="অর্ডার নম্বর বা কাস্টমার..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="bg-transparent border-none outline-none px-3 text-sm text-text-dark w-full md:w-64"
           />
         </div>
@@ -133,8 +162,8 @@ const AdminOrdersPage = () => {
                     </div>
                   </td>
                 </tr>
-              ) : orders.length > 0 ? (
-                orders.map((order) => (
+              ) : filteredOrders.length > 0 ? (
+                filteredOrders.map((order) => (
                   <tr key={order._id} className="hover:bg-cream/50 transition-colors group">
                     <td className="px-8 py-6">
                       <div className="flex flex-col gap-1" onClick={() => openDetails(order)}>
@@ -186,12 +215,20 @@ const AdminOrdersPage = () => {
                       </div>
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <button 
-                        onClick={() => openDetails(order)}
-                        className="p-2 text-text-light hover:text-terracotta hover:bg-cream rounded-lg transition-all"
-                      >
-                        <ExternalLink size={18} />
-                      </button>
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => openDetails(order)}
+                          className="p-2 text-text-light hover:text-terracotta hover:bg-cream rounded-lg transition-all"
+                        >
+                          <ExternalLink size={18} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(order._id)}
+                          className="p-2 text-text-light hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -1,10 +1,9 @@
 "use client";
 
-import React from "react";
+import Image from "next/image";
 import { X, Trash2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
-
 import { useRouter } from "next/navigation";
 
 const CartModal = () => {
@@ -81,8 +80,18 @@ const CartModal = () => {
               <div className="flex flex-col gap-3.5">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center gap-3.5 bg-cream rounded-xl p-3 md:px-3.5 border border-cream-dark">
-                    <div className="text-3xl w-13 h-13 bg-cream-dark rounded-xl flex items-center justify-center flex-shrink-0">
-                      {item.icon || "🏺"}
+                    <div className="w-13 h-13 bg-cream-dark rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                      {item.image ? (
+                        <Image 
+                          src={item.image} 
+                          alt={item.name} 
+                          fill 
+                          unoptimized
+                          className="object-cover"
+                        />
+                      ) : (
+                        <span className="text-3xl">{item.icon || "🏺"}</span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm text-text-dark truncate mb-0.5">{item.name}</div>

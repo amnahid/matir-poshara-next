@@ -10,6 +10,7 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import CartModal from "@/components/ui/CartModal";
 import TrackingModal from "@/components/ui/TrackingModal";
 import { ArrowRight, Truck, ShieldCheck, MapPin, Package } from "lucide-react";
+import Link from "next/link";
 import dbConnect from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Artisan from "@/models/Artisan";
@@ -104,8 +105,8 @@ async function getData() {
     await dbConnect();
     
     const [products, artisans, categories] = await Promise.all([
-      Product.find({ isBestSelling: true }).limit(5).lean() as Promise<IProduct[]>,
-      Artisan.find({}).limit(2).lean() as Promise<IArtisan[]>,
+      Product.find({ isBestSelling: true }).limit(10).lean() as Promise<IProduct[]>,
+      Artisan.find({}).lean() as Promise<IArtisan[]>,
       Category.find({}).limit(6).lean() as Promise<ICategory[]>
     ]);
 
@@ -155,9 +156,9 @@ export default async function Home() {
               <span className="w-1 h-6 bg-terracotta rounded-full"></span>
               সর্বাধিক বিক্রিত পণ্য
             </h2>
-            <a href="#" className="text-terracotta text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all">
+            <Link href="/category/all" className="text-terracotta text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all">
               সব দেখুন <ArrowRight size={16} />
-            </a>
+            </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {products.map((prod) => (

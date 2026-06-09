@@ -42,7 +42,7 @@ const Hero = () => {
           <span className="absolute top-2.5 right-3.5 text-6xl opacity-30 grayscale contrast-125">🍲</span>
           <p className="text-[11px] text-white/75 mb-1 font-medium">স্বাস্থ্যকর রান্না</p>
           <h3 className="font-tiro text-lg text-white leading-tight mb-2.5">ঐতিহ্যবাহী রান্নার পাত্র</h3>
-          <Link href="#" className="text-[12px] text-white/85 border-b border-white/40 w-fit transition-colors group-hover:text-white">
+          <Link href="/category/kitchen" className="text-[12px] text-white/85 border-b border-white/40 w-fit transition-colors group-hover:text-white">
             রান্নাঘরের পণ্য দেখুন ›
           </Link>
         </div>
@@ -51,7 +51,7 @@ const Hero = () => {
           <span className="absolute top-2.5 right-3.5 text-6xl opacity-30 grayscale contrast-125">🎁</span>
           <p className="text-[11px] text-white/75 mb-1 font-medium">বিশেষ উপলক্ষে</p>
           <h3 className="font-tiro text-lg text-white leading-tight mb-2.5">হস্তশিল্প উপহার সেট</h3>
-          <Link href="#" className="text-[12px] text-white/85 border-b border-white/40 w-fit transition-colors group-hover:text-white">
+          <Link href="/category/gifts" className="text-[12px] text-white/85 border-b border-white/40 w-fit transition-colors group-hover:text-white">
             উপহার সংগ্রহ দেখুন ›
           </Link>
         </div>

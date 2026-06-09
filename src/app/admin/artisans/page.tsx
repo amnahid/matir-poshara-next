@@ -10,6 +10,7 @@ import {
   MapPin,
   Award
 } from "lucide-react";
+import ArtisanFormModal from "@/components/admin/ArtisanFormModal";
 
 interface Artisan {
   _id: string;
@@ -24,6 +25,8 @@ const AdminArtisansPage = () => {
   const [artisans, setArtisans] = useState<Artisan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedArtisan, setSelectedArtisan] = useState<Artisan | null>(null);
 
   const fetchArtisans = async () => {
     try {
@@ -40,6 +43,34 @@ const AdminArtisansPage = () => {
   useEffect(() => {
     setTimeout(() => fetchArtisans(), 0);
   }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("আপনি কি নিশ্চিতভাবে এই কারিগরের তথ্য মুছে ফেলতে চান?")) return;
+    
+    try {
+      const res = await fetch(`/api/admin/artisans?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setArtisans(artisans.filter(a => a._id !== id));
+      } else {
+        alert("তথ্যটি মুছতে সমস্যা হয়েছে।");
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("সার্ভারে সমস্যা হয়েছে।");
+    }
+  };
+
+  const openEditModal = (artisan: Artisan) => {
+    setSelectedArtisan(artisan);
+    setIsModalOpen(true);
+  };
+
+  const openAddModal = () => {
+    setSelectedArtisan(null);
+    setIsModalOpen(true);
+  };
 
   const filteredArtisans = artisans.filter(a => 
     a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -65,7 +96,10 @@ const AdminArtisansPage = () => {
               className="bg-transparent border-none outline-none px-3 text-sm text-text-dark w-full md:w-48"
             />
           </div>
-          <button className="bg-terracotta text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-clay transition-all shadow-lg shadow-terracotta/20 flex items-center gap-2">
+          <button 
+            onClick={openAddModal}
+            className="bg-terracotta text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-clay transition-all shadow-lg shadow-terracotta/20 flex items-center gap-2"
+          >
             <Plus size={18} /> নতুন কারিগর
           </button>
         </div>
@@ -121,10 +155,16 @@ const AdminArtisansPage = () => {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-2 text-text-light hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all">
+                        <button 
+                          onClick={() => openEditModal(artisan)}
+                          className="p-2 text-text-light hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                        >
                           <Edit2 size={16} />
                         </button>
-                        <button className="p-2 text-text-light hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                        <button 
+                          onClick={() => handleDelete(artisan._id)}
+                          className="p-2 text-text-light hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -142,6 +182,13 @@ const AdminArtisansPage = () => {
           </table>
         </div>
       </div>
+
+      <ArtisanFormModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={fetchArtisans} 
+        artisan={selectedArtisan}
+      />
     </div>
   );
 };

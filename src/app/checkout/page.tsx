@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Navbar from "@/components/layout/Navbar";
@@ -117,7 +118,8 @@ const CheckoutPage = () => {
             name: item.name,
             price: item.price,
             qty: item.qty,
-            icon: item.icon
+            icon: item.icon,
+            image: item.image
           })),
           totalPrice: totalPrice,
         }),
@@ -270,8 +272,18 @@ const CheckoutPage = () => {
               <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto no-scrollbar pr-2">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex gap-4">
-                    <div className="w-14 h-14 bg-cream rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
-                      {item.icon}
+                    <div className="w-14 h-14 bg-cream rounded-xl flex items-center justify-center text-2xl flex-shrink-0 relative overflow-hidden">
+                      {item.image ? (
+                        <Image 
+                          src={item.image} 
+                          alt={item.name} 
+                          fill 
+                          unoptimized
+                          className="object-cover"
+                        />
+                      ) : (
+                        item.icon
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-bold text-text-dark truncate">{item.name}</div>

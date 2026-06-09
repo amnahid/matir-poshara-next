@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Eye, Heart, Loader2 } from "lucide-react";
 import Badge from "./Badge";
 import { useCart } from "@/context/CartContext";
@@ -18,6 +19,7 @@ interface ProductCardProps {
     reviewsCount: number;
     badge?: "new" | "sale" | "hot";
     icon?: string;
+    images?: string[];
   };
 }
 
@@ -28,6 +30,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [added, setAdded] = useState(false);
   const [liking, setLiking] = useState(false);
+
+  const productImage = product.images && product.images.length > 0 ? product.images[0] : null;
 
   // Check if product is in wishlist on mount
   useEffect(() => {
@@ -50,7 +54,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product);
+    addToCart({
+      ...product,
+      image: product.images && product.images.length > 0 ? product.images[0] : undefined
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
@@ -92,7 +99,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       href={`/product/${product.id}`}
       className="bg-white rounded-xl overflow-hidden shadow-sm transition-all hover:-translate-y-1 hover:shadow-clay-hover border-1.5 border-transparent hover:border-cream-dark group relative block"
     >
-      <div className="relative h-[180px] bg-cream-dark flex items-center justify-center text-6xl overflow-hidden">
+      <div className="relative h-[180px] bg-cream-dark flex items-center justify-center overflow-hidden">
         {product.badge && (
           <div className="absolute top-2.5 left-2.5 z-10">
             <Badge variant={product.badge}>
@@ -115,9 +122,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
         </button>
 
-        <div className="transition-transform group-hover:scale-110 duration-500">
-          {product.icon}
-        </div>
+        {productImage ? (
+          <Image 
+            src={productImage} 
+            alt={product.name} 
+            fill 
+            unoptimized
+            className="object-cover transition-transform group-hover:scale-110 duration-500"
+          />
+        ) : (
+          <div className="text-6xl transition-transform group-hover:scale-110 duration-500">
+            {product.icon}
+          </div>
+        )}
       </div>
 
       <div className="p-3.5">

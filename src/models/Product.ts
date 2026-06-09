@@ -13,6 +13,7 @@ export interface IProduct extends Document {
   images: string[];
   icon?: string;
   isBestSelling: boolean;
+  artisan?: string;
 }
 
 const ProductSchema: Schema = new Schema({
@@ -28,6 +29,7 @@ const ProductSchema: Schema = new Schema({
   images: { type: [String], default: [] },
   icon: { type: String },
   isBestSelling: { type: Boolean, default: false },
+  artisan: { type: String },
 });
 
 export default mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);
